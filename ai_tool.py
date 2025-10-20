@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 
 # ======================== CONFIG ========================
-API_KEY = "Enter your API Key here"  # <-- اپنی API Key یہاں ڈالیں
+API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"  # <-- اپنی API Key یہاں ڈالیں
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
