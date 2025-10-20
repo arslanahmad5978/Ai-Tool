@@ -2,9 +2,10 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 
+# ---------- PAGE CONFIG ----------
 st.set_page_config(page_title="YouTube Viral Topics Tool", layout="wide")
 
-# ---------- STYLES ----------
+# ---------- CUSTOM STYLES ----------
 st.markdown("""
     <style>
         body {
@@ -76,7 +77,11 @@ with st.container():
         if refresh:
             st.rerun()
 
+# ---------- CONSTANTS ----------
 API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
+YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
+YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
+YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 # ---------- FETCH DATA ----------
 if submitted:
@@ -90,8 +95,7 @@ if submitted:
         for keyword in keywords:
             st.markdown(f"🔍 Searching: <b>{keyword}</b>", unsafe_allow_html=True)
 
-            search_url = "https://www.googleapis.com/youtube/v3/search"
-            params = {
+            search_params = {
                 "part": "snippet",
                 "q": keyword,
                 "type": "video",
@@ -100,29 +104,41 @@ if submitted:
                 "maxResults": 6,
                 "key": API_KEY,
             }
-            data = requests.get(search_url, params=params).json()
+
+            data = requests.get(YOUTUBE_SEARCH_URL, params=search_params).json()
             videos = data.get("items", [])
-            video_ids = [v["id"]["videoId"] for v in videos]
-            channel_ids = [v["snippet"]["channelId"] for v in videos]
+            if not videos:
+                continue
+
+            video_ids = [v["id"]["videoId"] for v in videos if "videoId" in v["id"]]
+            channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v]
 
             stats_data = requests.get(
-                "https://www.googleapis.com/youtube/v3/videos",
+                YOUTUBE_VIDEO_URL,
                 params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
             ).json()
 
             channel_data = requests.get(
-                "https://www.googleapis.com/youtube/v3/channels",
+                YOUTUBE_CHANNEL_URL,
                 params={"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
             ).json()
 
             for video, vstat, cstat in zip(videos, stats_data.get("items", []), channel_data.get("items", [])):
-                subs = int(cstat["statistics"].get("subscriberCount", 0))
+                snippet = video.get("snippet", {})
+                statistics = vstat.get("statistics", {})
+                channel_stats = cstat.get("statistics", {})
+
+                title = snippet.get("title", "Untitled Video")
+                description = snippet.get("description", "No description")[:120]
+                views = int(statistics.get("viewCount", 0))
+                subs = int(channel_stats.get("subscriberCount", 0))
+
                 if subs < max_subs:
                     all_results.append({
                         "VideoID": video["id"]["videoId"],
-                        "Title": video["snippet"]["title"],
-                        "Description": video["snippet"]["description"][:100],
-                        "Views": int(vstat["statistics"].get("viewCount", 0)),
+                        "Title": title,
+                        "Description": description,
+                        "Views": views,
                         "Subscribers": subs,
                     })
 
@@ -135,19 +151,15 @@ if submitted:
                 cols = st.columns(3)
                 for col, res in zip(cols, row):
                     with col:
-                        st.markdown(
-                            f"""
+                        st.markdown(f"""
                             <div class="video-card">
-                                <iframe width="100%" height="200" 
-                                    src="https://www.youtube.com/embed/{res['VideoID']}" 
-                                    frameborder="0" allowfullscreen></iframe>
-                                <h4 style="color:#000;font-weight:800;font-size:20px;margin-top:10px;background-color:#fff;padding:10px;border-radius:10px;text-a
+                                <iframe width="100%" height="200" src="https://www.youtube.com/embed/{res['VideoID']}" frameborder="0" allowfullscreen></iframe>
+                                <h4 style="color:#000;font-weight:800;font-size:20px;margin-top:10px;background-color:#fff;padding:10px;border-radius:10px;text-align:center;">
+                                    {res['Title']}
+                                </h4>
                                 <p style="color:#ccc; font-size:13px;">{res['Description']}</p>
                                 <p style="color:#ff6b81; font-size:16px;">👁 {res['Views']:,} views | 👤 {res['Subscribers']:,} subs</p>
                             </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
-
+                        """, unsafe_allow_html=True)
         else:
             st.warning("😕 No matching small-channel videos found.")
