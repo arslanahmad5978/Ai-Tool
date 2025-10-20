@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="YouTube Viral Topics Tool", layout="wide")
 
+# ---------- STYLES ----------
 st.markdown("""
     <style>
         body {
@@ -55,6 +56,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ---------- HEADER ----------
 st.markdown('<h1 class="main-title">🎬 YouTube Viral Topics Finder</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-text">Find viral videos from small creators 🚀</p>', unsafe_allow_html=True)
 
@@ -65,17 +67,18 @@ with st.container():
         days = st.number_input("📅 Days to Search:", 1, 30, 5)
         max_subs = st.number_input("👤 Max Subscribers:", 0, 100000, 3000, step=500)
 
-        submitted = st.form_submit_button("🚀 Fetch Data")
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            submitted = st.form_submit_button("🚀 Fetch Data")
+        with col2:
+            refresh = st.form_submit_button("🔁 Refresh Page")
 
-    # Place refresh button OUTSIDE the form but on same line
-    _, refresh_col, _ = st.columns([4, 1, 1])
-    with refresh_col:
-        if st.button("🔁 Refresh Page"):
+        if refresh:
             st.rerun()
 
 API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
 
-# ---------- PROCESS ----------
+# ---------- FETCH DATA ----------
 if submitted:
     if not user_keywords.strip():
         st.warning("⚠️ Please enter at least one keyword.")
@@ -85,6 +88,8 @@ if submitted:
         all_results = []
 
         for keyword in keywords:
+            st.markdown(f"🔍 Searching: <b>{keyword}</b>", unsafe_allow_html=True)
+
             search_url = "https://www.googleapis.com/youtube/v3/search"
             params = {
                 "part": "snippet",
@@ -121,6 +126,7 @@ if submitted:
                         "Subscribers": subs,
                     })
 
+        # ---------- DISPLAY RESULTS ----------
         if all_results:
             st.markdown(f"✅ <b>Found {len(all_results)} viral videos!</b>", unsafe_allow_html=True)
 
@@ -143,16 +149,5 @@ if submitted:
                             unsafe_allow_html=True
                         )
 
-                if len(row) < 3:
-                    for _ in range(3 - len(row)):
-                        with st.empty():
-                            st.markdown(
-                                """
-                                <div class="video-card" style="text-align:center;">
-                                    <p style="color:#777;">🚫 No data available</p>
-                                </div>
-                                """,
-                                unsafe_allow_html=True
-                            )
         else:
             st.warning("😕 No matching small-channel videos found.")
