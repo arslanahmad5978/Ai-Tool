@@ -39,6 +39,15 @@ st.markdown("""
             background: linear-gradient(90deg, #ff6b81, #ff4b4b);
             transform: scale(1.05);
         }
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 10px 0;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
         .result-box {
             background: rgba(255,255,255,0.08);
             padding: 20px;
@@ -57,75 +66,75 @@ st.markdown("""
             margin-top: 50px;
             font-size: 14px;
         }
+        textarea, input {
+            border-radius: 12px !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 # ---------- HEADER ----------
 st.markdown('<h1 class="main-title">🎬 YouTube Viral Topics Finder</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-text">Discover trending videos from small creators 🚀</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-text">Discover trending videos from small creators — built for growth hackers & content explorers 🚀</p>', unsafe_allow_html=True)
 
 # ---------- INPUT FORM ----------
-with st.form("search_form", clear_on_submit=False):
-    st.markdown('<div style="background:rgba(255,255,255,0.05);padding:20px;border-radius:16px;">', unsafe_allow_html=True)
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        days = st.number_input("📅 Days to Search:", min_value=1, max_value=30, value=5)
-    with col2:
-        max_subs = st.number_input("👤 Max Subscribers:", min_value=0, max_value=100000, value=3000, step=500)
+with st.container():
+    with st.form("search_form", clear_on_submit=False):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    creation_filter = st.selectbox(
-        "📆 Channel Creation Date Filter:",
-        ["None", "Last 6 Months", "Last 1 Year", "Last 2 Years"]
-    )
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            days = st.number_input("📅 Days to Search:", min_value=1, max_value=30, value=5)
+        with col2:
+            user_keywords = st.text_area(
+                "🧠 Enter Keywords (comma or newline separated):",
+                placeholder="Example:\nReddit Relationship, Cheating Story, Open Marriage"
+            )
 
-    user_keywords = st.text_area(
-        "🧠 Enter Keywords (comma or newline separated):",
-        placeholder="Example:\nReddit Relationship, Cheating Story, Open Marriage"
-    )
+        # Subscriber limit input
+        max_subs = st.number_input(
+            "👤 Max Subscribers to Include:",
+            min_value=0,
+            max_value=100000,
+            value=3000,
+            step=500
+        )
 
-    col3, col4 = st.columns([1, 1])
-    with col3:
-        submitted = st.form_submit_button("🚀 Fetch Data")
-    with col4:
-        refresh = st.form_submit_button("🔄 Refresh Page")
-    st.markdown('</div>', unsafe_allow_html=True)
+        col3, col4 = st.columns([1, 1])
+        with col3:
+            submitted = st.form_submit_button("🚀 Fetch Data")
+        with col4:
+            refresh = st.form_submit_button("🔄 Refresh Page")
 
-if refresh:
-    st.rerun()
+        if refresh:
+            st.rerun()
 
-# ---------- API CONSTANTS ----------
-API_KEY = "Enter your API Key here"
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------- CONVERT INPUT ----------
+if user_keywords.strip():
+    if "," in user_keywords:
+        keywords = [k.strip() for k in user_keywords.split(",") if k.strip()]
+    else:
+        keywords = [k.strip() for k in user_keywords.split("\n") if k.strip()]
+else:
+    keywords = []
+
+# ---------- CONSTANTS ----------
+API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
-# ---------- MAIN LOGIC ----------
+# ---------- FETCH DATA ----------
 if submitted:
-    if not API_KEY or API_KEY == "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ":
+    if not API_KEY or API_KEY == "Enter your API Key here":
         st.error("❌ Please add your YouTube API key in the code.")
-    elif not user_keywords.strip():
+    elif not keywords:
         st.warning("⚠️ Please enter at least one keyword.")
     else:
         try:
-            # Prepare keywords list
-            if "," in user_keywords:
-                keywords = [k.strip() for k in user_keywords.split(",") if k.strip()]
-            else:
-                keywords = [k.strip() for k in user_keywords.split("\n") if k.strip()]
-
             start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
             all_results = []
-
-            # Channel creation cutoff logic
-            creation_cutoff = None
-            today = datetime.utcnow()
-            if creation_filter == "Last 6 Months":
-                creation_cutoff = today - timedelta(days=180)
-            elif creation_filter == "Last 1 Year":
-                creation_cutoff = today - timedelta(days=365)
-            elif creation_filter == "Last 2 Years":
-                creation_cutoff = today - timedelta(days=730)
-
             progress = st.progress(0)
             total = len(keywords)
 
@@ -156,9 +165,16 @@ if submitted:
                 if not video_ids or not channel_ids:
                     continue
 
-                # Get stats
-                stats_data = requests.get(YOUTUBE_VIDEO_URL, params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}).json()
-                channel_data = requests.get(YOUTUBE_CHANNEL_URL, params={"part": "snippet,statistics", "id": ",".join(channel_ids), "key": API_KEY}).json()
+                # Get video + channel stats
+                stats_data = requests.get(
+                    YOUTUBE_VIDEO_URL,
+                    params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
+                ).json()
+
+                channel_data = requests.get(
+                    YOUTUBE_CHANNEL_URL,
+                    params={"part": "snippet,statistics", "id": ",".join(channel_ids), "key": API_KEY}
+                ).json()
 
                 if "items" not in stats_data or "items" not in channel_data:
                     continue
@@ -169,33 +185,19 @@ if submitted:
                     video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
                     views = int(stat["statistics"].get("viewCount", 0))
                     subs = int(channel["statistics"].get("subscriberCount", 0))
-                    creation_date = channel["snippet"].get("publishedAt", "")
 
-                    # Filter channel creation date
-                    if creation_cutoff and creation_date:
-                        try:
-                            channel_date = datetime.fromisoformat(creation_date.replace("Z", ""))
-                            if channel_date < creation_cutoff:
-                                continue
-                        except:
-                            pass
-
-                    # Filter subscriber count
-                    if subs > max_subs:
-                        continue
-
-                    all_results.append({
-                        "Title": title,
-                        "Description": desc,
-                        "URL": video_url,
-                        "Views": views,
-                        "Subscribers": subs,
-                        "Channel_Created": creation_date[:10] if creation_date else "Unknown"
-                    })
+                    # Apply subscriber filter
+                    if subs < max_subs:
+                        all_results.append({
+                            "Title": title,
+                            "Description": desc,
+                            "URL": video_url,
+                            "Views": views,
+                            "Subscribers": subs
+                        })
 
             progress.empty()
 
-            # ---------- DISPLAY RESULTS ----------
             if all_results:
                 st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
                 for res in all_results:
@@ -205,8 +207,7 @@ if submitted:
                             <b>📝 Description:</b> {res['Description']}<br>
                             <b>🔗 Link:</b> <a href="{res['URL']}" target="_blank" style="color:#ff6b81;">Watch Video</a><br>
                             <b>👁 Views:</b> {res['Views']}<br>
-                            <b>👤 Subscribers:</b> {res['Subscribers']}<br>
-                            <b>📆 Channel Created:</b> {res['Channel_Created']}
+                            <b>👤 Subscribers:</b> {res['Subscribers']}
                         </div>
                     """, unsafe_allow_html=True)
             else:
@@ -216,4 +217,4 @@ if submitted:
             st.error(f"An error occurred: {e}")
 
 # ---------- FOOTER ----------
-st.markdown('<p class="footer">⚡ Built with ❤️ by <b>Sir Hassan & Ustad ka Shagird</b></p>', unsafe_allow_html=True)
+st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka shagird</b></p>', uns
