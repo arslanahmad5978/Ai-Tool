@@ -2,25 +2,106 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 
-# YouTube API Key
-API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
-YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
-YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
-YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
+# ---------- PAGE CONFIG ----------
+st.set_page_config(page_title="YouTube Viral Topics Tool", page_icon="🎥", layout="wide")
 
-# Streamlit App Title
-st.title("🎥 YouTube Viral Topics Tool")
+# ---------- CUSTOM CSS ----------
+st.markdown("""
+    <style>
+        body {
+            background: linear-gradient(135deg, #121212, #1e1e1e);
+            color: #fff;
+        }
+        .main-title {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: #ff4b4b;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255,75,75,0.5);
+        }
+        .sub-text {
+            text-align: center;
+            color: #ddd;
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+        .stButton>button {
+            background: linear-gradient(90deg, #ff4b4b, #ff6b81);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 25px;
+            transition: 0.3s;
+        }
+        .stButton>button:hover {
+            background: linear-gradient(90deg, #ff6b81, #ff4b4b);
+            transform: scale(1.05);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 18px;
+            margin: 10px 0;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .result-box {
+            background: rgba(255,255,255,0.08);
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s;
+        }
+        .result-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(255,75,75,0.2);
+        }
+        .footer {
+            text-align: center;
+            color: #999;
+            margin-top: 50px;
+            font-size: 14px;
+        }
+        textarea, input {
+            border-radius: 12px !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# Input Fields
-days = st.number_input("Enter Days to Search (1-30):", min_value=1, max_value=30, value=5)
+# ---------- HEADER ----------
+st.markdown('<h1 class="main-title">🎬 YouTube Viral Topics Finder</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-text">Discover trending videos from small creators — built for growth hackers & content explorers 🚀</p>', unsafe_allow_html=True)
 
-# New: User Keyword Input
-user_keywords = st.text_area(
-    "Enter Keywords (separate with commas or new lines):",
-    placeholder="Example:\nReddit Relationship, Cheating Story, Open Marriage"
-)
+# ---------- INPUT FORM ----------
+with st.container():
+    with st.form("search_form", clear_on_submit=False):
+        st.markdown('<div class="card">', unsafe_allow_html=True)
 
-# Convert input text to a list of keywords
+        col1, col2 = st.columns([1, 2])
+
+        with col1:
+            days = st.number_input("📅 Days to Search:", min_value=1, max_value=30, value=5)
+
+        with col2:
+            user_keywords = st.text_area(
+                "🧠 Enter Keywords (comma or newline separated):",
+                placeholder="Example:\nReddit Relationship, Cheating Story, Open Marriage"
+            )
+
+        col3, col4 = st.columns([1, 1])
+        with col3:
+            submitted = st.form_submit_button("🚀 Fetch Data")
+        with col4:
+            if st.form_submit_button("🔄 Refresh Page"):
+                st.experimental_rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ---------- CONVERT INPUT ----------
 if user_keywords.strip():
     if "," in user_keywords:
         keywords = [k.strip() for k in user_keywords.split(",") if k.strip()]
@@ -29,21 +110,29 @@ if user_keywords.strip():
 else:
     keywords = []
 
-# Fetch Data Button
-if st.button("Fetch Data"):
+# ---------- CONSTANTS ----------
+API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
+YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
+YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
+YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
+
+# ---------- FETCH DATA ----------
+if submitted:
     if not API_KEY or API_KEY == "Enter your API Key here":
-        st.error("❌ Please enter your valid YouTube API key in the code.")
+        st.error("❌ Please add your YouTube API key in the code.")
     elif not keywords:
         st.warning("⚠️ Please enter at least one keyword.")
     else:
         try:
-            # Calculate date range
             start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
             all_results = []
 
-            # Iterate over the list of keywords
-            for keyword in keywords:
-                st.write(f"🔍 Searching for keyword: **{keyword}**")
+            progress = st.progress(0)
+            total = len(keywords)
+
+            for i, keyword in enumerate(keywords, start=1):
+                st.markdown(f"<p style='color:#ff6b81;'>🔍 Searching: <b>{keyword}</b> ({i}/{total})</p>", unsafe_allow_html=True)
+                progress.progress(i / total)
 
                 search_params = {
                     "part": "snippet",
@@ -55,12 +144,10 @@ if st.button("Fetch Data"):
                     "key": API_KEY,
                 }
 
-                # Fetch video data
                 response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
                 data = response.json()
 
                 if "items" not in data or not data["items"]:
-                    st.warning(f"No videos found for keyword: {keyword}")
                     continue
 
                 videos = data["items"]
@@ -68,57 +155,50 @@ if st.button("Fetch Data"):
                 channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
 
                 if not video_ids or not channel_ids:
-                    st.warning(f"Skipping keyword: {keyword} due to missing video/channel data.")
                     continue
 
-                # Fetch video statistics
-                stats_params = {"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
-                stats_response = requests.get(YOUTUBE_VIDEO_URL, params=stats_params)
-                stats_data = stats_response.json()
-
-                # Fetch channel statistics
-                channel_params = {"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}
-                channel_response = requests.get(YOUTUBE_CHANNEL_URL, params=channel_params)
-                channel_data = channel_response.json()
+                # Get video + channel stats
+                stats_data = requests.get(YOUTUBE_VIDEO_URL, params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}).json()
+                channel_data = requests.get(YOUTUBE_CHANNEL_URL, params={"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}).json()
 
                 if "items" not in stats_data or "items" not in channel_data:
-                    st.warning(f"Failed to fetch stats for keyword: {keyword}")
                     continue
 
-                stats = stats_data["items"]
-                channels = channel_data["items"]
-
-                # Collect results
-                for video, stat, channel in zip(videos, stats, channels):
+                for video, stat, channel in zip(videos, stats_data["items"], channel_data["items"]):
                     title = video["snippet"].get("title", "N/A")
-                    description = video["snippet"].get("description", "")[:200]
+                    desc = video["snippet"].get("description", "")[:180]
                     video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
                     views = int(stat["statistics"].get("viewCount", 0))
                     subs = int(channel["statistics"].get("subscriberCount", 0))
 
-                    if subs < 3000:  # Only include small channels
+                    if subs < 3000:
                         all_results.append({
                             "Title": title,
-                            "Description": description,
+                            "Description": desc,
                             "URL": video_url,
                             "Views": views,
                             "Subscribers": subs
                         })
 
-            # Display results
+            progress.empty()
+
             if all_results:
-                st.success(f"✅ Found {len(all_results)} results across all keywords!")
-                for result in all_results:
-                    st.markdown(
-                        f"**🎬 Title:** {result['Title']}  \n"
-                        f"**📝 Description:** {result['Description']}  \n"
-                        f"**🔗 URL:** [Watch Video]({result['URL']})  \n"
-                        f"**👁 Views:** {result['Views']}  \n"
-                        f"**👤 Subscribers:** {result['Subscribers']}"
-                    )
-                    st.write("---")
+                st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
+                for res in all_results:
+                    st.markdown(f"""
+                        <div class="result-box">
+                            <b>🎬 Title:</b> {res['Title']}<br>
+                            <b>📝 Description:</b> {res['Description']}<br>
+                            <b>🔗 Link:</b> <a href="{res['URL']}" target="_blank" style="color:#ff6b81;">Watch Video</a><br>
+                            <b>👁 Views:</b> {res['Views']}<br>
+                            <b>👤 Subscribers:</b> {res['Subscribers']}
+                        </div>
+                    """, unsafe_allow_html=True)
             else:
-                st.warning("No results found for small channels (under 3K subs).")
+                st.warning("No matching small-channel videos found.")
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
+
+# ---------- FOOTER ----------
+st.markdown('<p class="footer">⚡ Built with ❤️ using Streamlit | Designed by <b>ChatGPT</b></p>', unsafe_allow_html=True)
