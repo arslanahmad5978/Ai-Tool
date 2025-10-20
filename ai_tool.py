@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 
 # ======================== CONFIG ========================
-API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
+API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"  # 👈 اپنا YouTube API Key یہاں ڈالنا لازمی ہے
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
@@ -27,14 +27,6 @@ st.markdown("""
             font-size: 18px;
             margin-bottom: 30px;
         }
-        .stTextArea textarea {
-            background-color: #1b1f24 !important;
-            color: white !important;
-        }
-        .stNumberInput input {
-            background-color: #1b1f24 !important;
-            color: white !important;
-        }
         .result-box {
             background-color: #1e242e;
             padding: 15px;
@@ -49,7 +41,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ======================== TITLE ========================
+# ======================== HEADER ========================
 st.markdown("<h1 class='main-title'>🎥 YouTube Viral Topics Finder</h1>", unsafe_allow_html=True)
 st.markdown("<p class='sub-title'>Find trending small-channel videos fast!</p>", unsafe_allow_html=True)
 
@@ -71,18 +63,24 @@ with st.form("input_form"):
         placeholder="e.g. Reddit Relationship, Cheating Story, AITA Update"
     )
 
-    submit = st.form_submit_button("🚀 Fetch Data")
-    refresh = st.form_submit_button("🔄 Refresh Page")
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
+        submit = st.form_submit_button("🚀 Fetch Data")
+    with col_b:
+        refresh = st.form_submit_button("🔄 Refresh Page")
 
+# ✅ Safe Refresh
 if refresh:
-    st.experimental_rerun()
+    st.rerun()
 
 # ======================== MAIN LOGIC ========================
 if submit:
-    try:
-        if not keywords_input.strip():
-            st.warning("⚠️ Please enter at least one keyword.")
-        else:
+    if not API_KEY or API_KEY == "Enter your API Key here":
+        st.error("❌ Please enter your valid YouTube API key in the code.")
+    elif not keywords_input.strip():
+        st.warning("⚠️ Please enter at least one keyword.")
+    else:
+        try:
             keywords = [k.strip() for k in keywords_input.replace("\n", ",").split(",") if k.strip()]
             start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
             all_results = []
@@ -141,6 +139,7 @@ if submit:
                     subs = int(channel["statistics"].get("subscriberCount", 0))
                     creation_date = datetime.fromisoformat(channel["snippet"]["publishedAt"].replace("Z", ""))
 
+                    # Apply filters
                     if creation_cutoff and creation_date < creation_cutoff:
                         continue
                     if subs > max_subs:
@@ -161,18 +160,4 @@ if submit:
                 st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
                 for res in all_results:
                     st.markdown(f"""
-                        <div class="result-box">
-                            <b>🎬 Title:</b> {res['Title']}<br>
-                            <b>📝 Description:</b> {res['Description']}<br>
-                            <b>🔗 Link:</b> <a href="{res['URL']}" target="_blank" style="color:#ff6b81;">Watch Video</a><br>
-                            <b>👁 Views:</b> {res['Views']}<br>
-                            <b>👤 Subscribers:</b> {res['Subscribers']}<br>
-                            <b>📆 Channel Created:</b> {res['Created']}
-                        </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.warning("😕 No matching small-channel videos found.")
-
-    except Exception as e:
-        st.error(f"❌ Error: {e}")
-
+                        <div class="resu
