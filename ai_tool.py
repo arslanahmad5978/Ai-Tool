@@ -65,12 +65,13 @@ with st.container():
         days = st.number_input("📅 Days to Search:", 1, 30, 5)
         max_subs = st.number_input("👤 Max Subscribers:", 0, 100000, 3000, step=500)
 
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            submitted = st.form_submit_button("🚀 Fetch Data")
-        with col2:
-            if st.button("🔁 Refresh Page"):
-                st.rerun()
+        submitted = st.form_submit_button("🚀 Fetch Data")
+
+    # Place refresh button OUTSIDE the form but on same line
+    _, refresh_col, _ = st.columns([4, 1, 1])
+    with refresh_col:
+        if st.button("🔁 Refresh Page"):
+            st.rerun()
 
 API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
 
