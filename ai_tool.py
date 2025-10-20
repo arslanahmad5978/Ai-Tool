@@ -61,10 +61,16 @@ st.markdown('<p class="sub-text">Find viral videos from small creators 🚀</p>'
 # ---------- INPUT FORM ----------
 with st.container():
     with st.form("search_form"):
-        days = st.number_input("📅 Days to Search:", 1, 30, 5)
         user_keywords = st.text_area("🧠 Enter Keywords (comma or newline separated):", "cheatingstory, funny, cat")
+        days = st.number_input("📅 Days to Search:", 1, 30, 5)
         max_subs = st.number_input("👤 Max Subscribers:", 0, 100000, 3000, step=500)
-        submitted = st.form_submit_button("🚀 Fetch Data")
+
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            submitted = st.form_submit_button("🚀 Fetch Data")
+        with col2:
+            if st.button("🔁 Refresh Page"):
+                st.rerun()
 
 API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
 
@@ -117,7 +123,6 @@ if submitted:
         if all_results:
             st.markdown(f"✅ <b>Found {len(all_results)} viral videos!</b>", unsafe_allow_html=True)
 
-            # Show in 3-column grid using Streamlit columns
             rows = [all_results[i:i + 3] for i in range(0, len(all_results), 3)]
             for row in rows:
                 cols = st.columns(3)
@@ -137,11 +142,9 @@ if submitted:
                             unsafe_allow_html=True
                         )
 
-                # fill empty boxes if less than 3
                 if len(row) < 3:
                     for _ in range(3 - len(row)):
-                        col = st.empty()
-                        with col:
+                        with st.empty():
                             st.markdown(
                                 """
                                 <div class="video-card" style="text-align:center;">
