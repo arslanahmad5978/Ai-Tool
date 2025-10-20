@@ -78,7 +78,7 @@ with st.container():
             st.rerun()
 
 # ---------- CONSTANTS ----------
-API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
+API_KEY = "AIzaSyB1I7rvVILlfnswrwmvgVMOizUKpNx-vrc"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
