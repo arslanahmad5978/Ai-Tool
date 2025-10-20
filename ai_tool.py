@@ -141,9 +141,9 @@ if submitted:
                                 <iframe width="100%" height="200" 
                                     src="https://www.youtube.com/embed/{res['VideoID']}" 
                                     frameborder="0" allowfullscreen></iframe>
-                                <h4 style="color:#fff; margin-top:10px;">{res['Title']}</h4>
+                                <h4 style="color:#000;font-weight:800;font-size:20px;margin-top:10px;background-color:#fff;padding:10px;border-radius:10px;text-a
                                 <p style="color:#ccc; font-size:13px;">{res['Description']}</p>
-                                <p style="color:#ff6b81; font-size:14px;">👁 {res['Views']:,} views | 👤 {res['Subscribers']:,} subs</p>
+                                <p style="color:#ff6b81; font-size:16px;">👁 {res['Views']:,} views | 👤 {res['Subscribers']:,} subs</p>
                             </div>
                             """,
                             unsafe_allow_html=True
