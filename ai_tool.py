@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 
 # ======================== CONFIG ========================
-API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"  # <-- اپنی API Key یہاں ڈالیں
+API_KEY = "Enter your API Key here"  # <-- اپنی API Key یہاں ڈالیں
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
@@ -55,7 +55,6 @@ if refresh:
 
 # ======================== MAIN LOGIC ========================
 if submit:
-    # basic validations
     if not API_KEY or API_KEY == "Enter your API Key here":
         st.error("❌ Please enter your valid YouTube API key in the code.")
     elif not keywords_input.strip():
@@ -68,33 +67,4 @@ if submit:
             all_results = []
 
             # Channel creation cutoff logic
-            creation_cutoff = None
-            today = datetime.utcnow()
-            if creation_filter == "Last 6 Months":
-                creation_cutoff = today - timedelta(days=180)
-            elif creation_filter == "Last 1 Year":
-                creation_cutoff = today - timedelta(days=365)
-            elif creation_filter == "Last 2 Years":
-                creation_cutoff = today - timedelta(days=730)
-
-            progress = st.progress(0)
-            total = len(keywords)
-
-            for i, keyword in enumerate(keywords, start=1):
-                st.markdown(f"<p style='color:#ff6b81;'>🔍 Searching: <b>{keyword}</b> ({i}/{total})</p>", unsafe_allow_html=True)
-                progress.progress(i / total)
-
-                search_params = {
-                    "part": "snippet",
-                    "q": keyword,
-                    "type": "video",
-                    "order": "viewCount",
-                    "publishedAfter": start_date,
-                    "maxResults": 5,
-                    "key": API_KEY,
-                }
-
-                response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
-                data = response.json()
-
-                # handle API / quota / unexpected res
+            creation_cutoff_
