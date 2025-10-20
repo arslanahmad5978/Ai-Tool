@@ -201,4 +201,4 @@ if submitted:
             st.error(f"An error occurred: {e}")
 
 # ---------- FOOTER ----------
-st.markdown('<p class="footer">⚡ Built with ❤️ using Streamlit | Designed by <b>ChatGPT</b></p>', unsafe_allow_html=True)
+st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka shagird</b></p>', unsafe_allow_html=True)
