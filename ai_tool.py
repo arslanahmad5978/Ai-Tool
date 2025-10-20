@@ -48,26 +48,32 @@ st.markdown("""
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-        .result-box {
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .video-card {
             background: rgba(255,255,255,0.08);
-            padding: 20px;
+            padding: 15px;
             border-radius: 14px;
-            margin-bottom: 15px;
             border: 1px solid rgba(255,255,255,0.1);
             transition: 0.3s;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
         }
-        .result-box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(255,75,75,0.2);
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255,75,75,0.3);
+        }
+        iframe {
+            border-radius: 10px;
         }
         .footer {
             text-align: center;
             color: #999;
             margin-top: 50px;
             font-size: 14px;
-        }
-        textarea, input {
-            border-radius: 12px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -181,17 +187,16 @@ if submitted:
 
                 for video, stat, channel in zip(videos, stats_data["items"], channel_data["items"]):
                     title = video["snippet"].get("title", "N/A")
-                    desc = video["snippet"].get("description", "")[:180]
-                    video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
+                    desc = video["snippet"].get("description", "")[:150]
+                    video_id = video["id"]["videoId"]
                     views = int(stat["statistics"].get("viewCount", 0))
                     subs = int(channel["statistics"].get("subscriberCount", 0))
 
-                    # Apply subscriber filter
                     if subs < max_subs:
                         all_results.append({
                             "Title": title,
                             "Description": desc,
-                            "URL": video_url,
+                            "VideoID": video_id,
                             "Views": views,
                             "Subscribers": subs
                         })
@@ -200,16 +205,21 @@ if submitted:
 
             if all_results:
                 st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
+
+                # 🧱 Video Grid Layout
+                grid_html = '<div class="video-grid">'
                 for res in all_results:
-                    st.markdown(f"""
-                        <div class="result-box">
-                            <b>🎬 Title:</b> {res['Title']}<br>
-                            <b>📝 Description:</b> {res['Description']}<br>
-                            <b>🔗 Link:</b> <a href="{res['URL']}" target="_blank" style="color:#ff6b81;">Watch Video</a><br>
-                            <b>👁 Views:</b> {res['Views']}<br>
-                            <b>👤 Subscribers:</b> {res['Subscribers']}
+                    grid_html += f"""
+                        <div class="video-card">
+                            <iframe width="100%" height="200" src="https://www.youtube.com/embed/{res['VideoID']}" frameborder="0" allowfullscreen></iframe>
+                            <h4 style="color:#fff; margin-top:10px;">{res['Title']}</h4>
+                            <p style="color:#ccc; font-size:13px;">{res['Description']}</p>
+                            <p style="color:#ff6b81; font-size:14px;">👁 {res['Views']:,} views | 👤 {res['Subscribers']:,} subs</p>
                         </div>
-                    """, unsafe_allow_html=True)
+                    """
+                grid_html += '</div>'
+                st.markdown(grid_html, unsafe_allow_html=True)
+
             else:
                 st.warning("😕 No matching small-channel videos found.")
 
