@@ -3,40 +3,20 @@ import requests
 from datetime import datetime, timedelta
 
 # ======================== CONFIG ========================
-API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"  # 👈 اپنا YouTube API Key یہاں ڈالنا لازمی ہے
+API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"  # <-- اپنی API Key یہاں ڈالیں
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 # ======================== PAGE DESIGN ========================
 st.set_page_config(page_title="🎬 YouTube Viral Finder", page_icon="🔥", layout="wide")
-
 st.markdown("""
     <style>
         body {background-color: #0e1117; color: white;}
-        .main-title {
-            text-align: center; 
-            color: #ff4b4b; 
-            font-size: 38px; 
-            font-weight: bold;
-            padding-bottom: 10px;
-        }
-        .sub-title {
-            text-align: center;
-            color: #bbb;
-            font-size: 18px;
-            margin-bottom: 30px;
-        }
-        .result-box {
-            background-color: #1e242e;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 0 10px rgba(255,75,75,0.2);
-        }
-        .result-box:hover {
-            background-color: #2c303a;
-        }
+        .main-title {text-align: center; color: #ff4b4b; font-size: 38px; font-weight: bold; padding-bottom: 10px;}
+        .sub-title {text-align: center; color: #bbb; font-size: 18px; margin-bottom: 30px;}
+        .result-box {background-color: #1e242e; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 0 10px rgba(255,75,75,0.2);}
+        .result-box:hover {background-color: #2c303a;}
         a {text-decoration: none;}
     </style>
 """, unsafe_allow_html=True)
@@ -69,23 +49,25 @@ with st.form("input_form"):
     with col_b:
         refresh = st.form_submit_button("🔄 Refresh Page")
 
-# ✅ Safe Refresh
+# Safe refresh
 if refresh:
     st.rerun()
 
 # ======================== MAIN LOGIC ========================
 if submit:
+    # basic validations
     if not API_KEY or API_KEY == "Enter your API Key here":
         st.error("❌ Please enter your valid YouTube API key in the code.")
     elif not keywords_input.strip():
         st.warning("⚠️ Please enter at least one keyword.")
     else:
         try:
+            # prepare keywords list
             keywords = [k.strip() for k in keywords_input.replace("\n", ",").split(",") if k.strip()]
             start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
             all_results = []
 
-            # Channel creation filter logic
+            # Channel creation cutoff logic
             creation_cutoff = None
             today = datetime.utcnow()
             if creation_filter == "Last 6 Months":
@@ -115,8 +97,4 @@ if submit:
                 response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
                 data = response.json()
 
-                if "items" not in data or not data["items"]:
-                    continue
-
-                videos = data["items"]
-                video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "video]()_
+                # handle API / quota / unexpected res
