@@ -48,32 +48,27 @@ st.markdown("""
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .video-card {
-            background: rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 6px 25px rgba(0,0,0,0.25);
-            transition: 0.3s;
-        }
-        .video-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(255,75,75,0.2);
-        }
         .footer {
             text-align: center;
             color: #999;
             margin-top: 50px;
             font-size: 14px;
         }
-        textarea, input {
-            border-radius: 12px !important;
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .video-card {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(255,75,75,0.3);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -96,6 +91,7 @@ with st.container():
                 placeholder="Example:\nReddit Relationship, Cheating Story, Open Marriage"
             )
 
+        # Subscriber limit input
         max_subs = st.number_input(
             "👤 Max Subscribers to Include:",
             min_value=0,
@@ -170,6 +166,7 @@ if submitted:
                 if not video_ids or not channel_ids:
                     continue
 
+                # Get video + channel stats
                 stats_data = requests.get(
                     YOUTUBE_VIDEO_URL,
                     params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}
@@ -190,11 +187,12 @@ if submitted:
                     views = int(stat["statistics"].get("viewCount", 0))
                     subs = int(channel["statistics"].get("subscriberCount", 0))
 
+                    # Apply subscriber filter
                     if subs < max_subs:
                         all_results.append({
+                            "VideoID": video_id,
                             "Title": title,
                             "Description": desc,
-                            "VideoID": video_id,
                             "Views": views,
                             "Subscribers": subs
                         })
@@ -202,21 +200,23 @@ if submitted:
             progress.empty()
 
             if all_results:
-                st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color:#4caf50;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
 
-                # 🧱 Video Grid Layout (Improved with placeholders)
+                # Build video grid
                 grid_html = '<div class="video-grid">'
-
                 for res in all_results:
                     grid_html += f"""
                         <div class="video-card">
-                            <iframe width="100%" height="200" src="https://www.youtube.com/embed/{res['VideoID']}" frameborder="0" allowfullscreen></iframe>
+                            <iframe width="100%" height="200"
+                                    src="https://www.youtube.com/embed/{res['VideoID']}"
+                                    frameborder="0" allowfullscreen></iframe>
                             <h4 style="color:#fff; margin-top:10px;">{res['Title']}</h4>
                             <p style="color:#ccc; font-size:13px;">{res['Description']}</p>
                             <p style="color:#ff6b81; font-size:14px;">👁 {res['Views']:,} views | 👤 {res['Subscribers']:,} subs</p>
                         </div>
                     """
 
+                # Fill remaining grid slots with placeholders
                 if len(all_results) % 3 != 0:
                     remaining = 3 - (len(all_results) % 3)
                     for _ in range(remaining):
@@ -226,9 +226,8 @@ if submitted:
                             </div>
                         """
 
-                grid_html += '</div>'
-                st.markdown(grid_html, unsafe_allow_html=True)
-
+                grid_html += "</div>"
+                st.components.v1.html(grid_html, height=900, scrolling=True)
             else:
                 st.warning("😕 No matching small-channel videos found.")
 
@@ -236,4 +235,4 @@ if submitted:
             st.error(f"An error occurred: {e}")
 
 # ---------- FOOTER ----------
-st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka Shagird</b></p>', unsafe_allow_html=True)
+st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka shagird</b></p>', unsafe_allow_html=True)
