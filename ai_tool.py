@@ -217,4 +217,4 @@ if submitted:
             st.error(f"An error occurred: {e}")
 
 # ---------- FOOTER ----------
-st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka shagird</b></p>', uns
+st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka shagird</b></p>', unsafe_allow_html=True)
