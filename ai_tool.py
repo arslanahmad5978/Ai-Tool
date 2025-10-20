@@ -85,6 +85,17 @@ with st.container():
 
         with col1:
             days = st.number_input("📅 Days to Search:", min_value=1, max_value=30, value=5)
+            creation_filter = st.selectbox(
+                "📆 Channel Created After:",
+                ["None", "Last 6 Months", "Last 1 Year", "Last 2 Years"]
+            )
+            max_subs = st.number_input(
+                "👤 Max Subscribers:",
+                min_value=0,
+                max_value=100000,
+                value=3000,
+                step=500
+            )
 
         with col2:
             user_keywords = st.text_area(
@@ -111,7 +122,7 @@ else:
     keywords = []
 
 # ---------- CONSTANTS ----------
-API_KEY = "AIzaSyDpg5IspCa_V23iiY0c9w7yI3nB-IYdIDQ"
+API_KEY = "Enter your API Key here"
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_URL = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
@@ -127,78 +138,13 @@ if submitted:
             start_date = (datetime.utcnow() - timedelta(days=int(days))).isoformat("T") + "Z"
             all_results = []
 
-            progress = st.progress(0)
-            total = len(keywords)
-
-            for i, keyword in enumerate(keywords, start=1):
-                st.markdown(f"<p style='color:#ff6b81;'>🔍 Searching: <b>{keyword}</b> ({i}/{total})</p>", unsafe_allow_html=True)
-                progress.progress(i / total)
-
-                search_params = {
-                    "part": "snippet",
-                    "q": keyword,
-                    "type": "video",
-                    "order": "viewCount",
-                    "publishedAfter": start_date,
-                    "maxResults": 5,
-                    "key": API_KEY,
-                }
-
-                response = requests.get(YOUTUBE_SEARCH_URL, params=search_params)
-                data = response.json()
-
-                if "items" not in data or not data["items"]:
-                    continue
-
-                videos = data["items"]
-                video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "videoId" in v["id"]]
-                channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
-
-                if not video_ids or not channel_ids:
-                    continue
-
-                # Get video + channel stats
-                stats_data = requests.get(YOUTUBE_VIDEO_URL, params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}).json()
-                channel_data = requests.get(YOUTUBE_CHANNEL_URL, params={"part": "statistics", "id": ",".join(channel_ids), "key": API_KEY}).json()
-
-                if "items" not in stats_data or "items" not in channel_data:
-                    continue
-
-                for video, stat, channel in zip(videos, stats_data["items"], channel_data["items"]):
-                    title = video["snippet"].get("title", "N/A")
-                    desc = video["snippet"].get("description", "")[:180]
-                    video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
-                    views = int(stat["statistics"].get("viewCount", 0))
-                    subs = int(channel["statistics"].get("subscriberCount", 0))
-
-                    if subs < 3000:
-                        all_results.append({
-                            "Title": title,
-                            "Description": desc,
-                            "URL": video_url,
-                            "Views": views,
-                            "Subscribers": subs
-                        })
-
-            progress.empty()
-
-            if all_results:
-                st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
-                for res in all_results:
-                    st.markdown(f"""
-                        <div class="result-box">
-                            <b>🎬 Title:</b> {res['Title']}<br>
-                            <b>📝 Description:</b> {res['Description']}<br>
-                            <b>🔗 Link:</b> <a href="{res['URL']}" target="_blank" style="color:#ff6b81;">Watch Video</a><br>
-                            <b>👁 Views:</b> {res['Views']}<br>
-                            <b>👤 Subscribers:</b> {res['Subscribers']}
-                        </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.warning("No matching small-channel videos found.")
-
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
-
-# ---------- FOOTER ----------
-st.markdown('<p class="footer">⚡ Built with ❤️ Sir Hassan | Designed by <b>Ustad ka shagird</b></p>', unsafe_allow_html=True)
+            # Channel creation cutoff logic
+            creation_cutoff = None
+            if creation_filter != "None":
+                today = datetime.utcnow()
+                if creation_filter == "Last 6 Months":
+                    creation_cutoff = today - timedelta(days=180)
+                elif creation_filter == "Last 1 Year":
+                    creation_cutoff = today - timedelta(days=365)
+                elif creation_filter == "Last 2 Years":
+                    creation_cutoff = today - timedelta(days=730)
