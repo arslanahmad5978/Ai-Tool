@@ -119,45 +119,4 @@ if submit:
                     continue
 
                 videos = data["items"]
-                video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "videoId" in v["id"]]
-                channel_ids = [v["snippet"]["channelId"] for v in videos if "snippet" in v and "channelId" in v["snippet"]]
-
-                if not video_ids or not channel_ids:
-                    continue
-
-                stats_data = requests.get(YOUTUBE_VIDEO_URL, params={"part": "statistics", "id": ",".join(video_ids), "key": API_KEY}).json()
-                channel_data = requests.get(YOUTUBE_CHANNEL_URL, params={"part": "snippet,statistics", "id": ",".join(channel_ids), "key": API_KEY}).json()
-
-                if "items" not in stats_data or "items" not in channel_data:
-                    continue
-
-                for video, stat, channel in zip(videos, stats_data["items"], channel_data["items"]):
-                    title = video["snippet"].get("title", "N/A")
-                    desc = video["snippet"].get("description", "")[:180]
-                    video_url = f"https://www.youtube.com/watch?v={video['id']['videoId']}"
-                    views = int(stat["statistics"].get("viewCount", 0))
-                    subs = int(channel["statistics"].get("subscriberCount", 0))
-                    creation_date = datetime.fromisoformat(channel["snippet"]["publishedAt"].replace("Z", ""))
-
-                    # Apply filters
-                    if creation_cutoff and creation_date < creation_cutoff:
-                        continue
-                    if subs > max_subs:
-                        continue
-
-                    all_results.append({
-                        "Title": title,
-                        "Description": desc,
-                        "URL": video_url,
-                        "Views": views,
-                        "Subscribers": subs,
-                        "Created": creation_date.strftime("%Y-%m-%d")
-                    })
-
-            progress.empty()
-
-            if all_results:
-                st.markdown(f"<h3 style='color:#ff4b4b;'>✅ Found {len(all_results)} viral videos!</h3>", unsafe_allow_html=True)
-                for res in all_results:
-                    st.markdown(f"""
-                        <div class="resu
+                video_ids = [v["id"]["videoId"] for v in videos if "id" in v and "video]()_
